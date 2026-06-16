@@ -1,0 +1,41 @@
+# This is a Databricks asset bundle definition for bakhouse_analytics.
+# See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
+bundle:
+  name: bakhouse_analytics
+  uuid: e60e536f-9879-4642-a744-9b93677937e9
+
+include:
+  - resources/*.yml
+
+# Variable declarations. These variables are assigned in the dev/prod targets below.
+variables:
+  catalog:
+    description: The catalog to use
+  schema:
+    description: The schema to use
+
+targets:
+  dev:
+    # The default target uses 'mode: development' to create a development copy.
+    # - Deployed resources get prefixed with '[dev my_user_name]'
+    # - Any job schedules and triggers are paused by default.
+    # See also https://docs.databricks.com/dev-tools/bundles/deployment-modes.html.
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-0cddd101-0021.cloud.databricks.com
+    variables:
+      catalog: backhouse_analytics_dev
+      schema: conform
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-0cddd101-0021.cloud.databricks.com
+      # We explicitly deploy to /Workspace/Users/patelviral2208@gmail.com to make sure we only have a single copy.
+      root_path: /Workspace/Users/patelviral2208@gmail.com/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalog: backhouse_analytics_prod
+      schema: conform
+    permissions:
+      - user_name: patelviral2208@gmail.com
+        level: CAN_MANAGE
