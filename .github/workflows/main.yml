@@ -1,7 +1,7 @@
 #This workflow validates, deploys, and runs the specified bundle
 #within a production target named "prod".
 
-name: 'Production deployment
+name: 'Production deployment'
 
 #Ensure that only a single job or workflow using the same concurrency group
 #runs at a time.
@@ -13,26 +13,37 @@ on:
     push:
         branches:
             - main
+            - dev
         paths:
-            - 'bakehosue_analytics/**'
+            - 'bakehouse_analytics/**'
 
 jobs:
     deploy:
-        name: 'Deploy bundle
+        name: 'Deploy bundle'
         runs-on: ubuntu-latest
 
         steps:
-          #check out this repo, so that this worklow can access it.
+          #check out this repo, so that this workflow can access it.
           - uses: actions/checkout@v3
 
           #download the databricks CLI.
-          #see https://github.com/databricks/steup-cli
+          #see https://github.com/databricks/setup-cli
           - uses: databricks/setup-cli@main
 
-          #deploy to bunble to prod  target as defined
+          #Set environment based on branch
+          - name: Set environment
+            id: set-env
+            run: |
+              if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                echo "env=prod" >> $GITHUB_OUTPUT
+              elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+                echo "env=dev" >> $GITHUB_OUTPUT
+              fi
+
+          #deploy the bundle to prod target as defined
           #in the bundle setting file 
           - run: databricks bundle deploy
-            working-directory: backhouse_analytics
+            working-directory: bakehouse_analytics
             env: 
-                DATABRICKS_TOKEN: ${{SECRET.DB_TOKEN}}
-                DATABRICKS_BUNDLE_ENV: ${{env}}
+                DATABRICKS_TOKEN: ${{secrets.DB_TOKEN}}
+                DATABRICKS_BUNDLE_ENV: ${{ steps.set-env.outputs.env }}
