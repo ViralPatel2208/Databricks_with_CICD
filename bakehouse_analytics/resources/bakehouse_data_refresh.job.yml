@@ -25,9 +25,9 @@ resources:
         - task_key: customer_360
           notebook_task:
             notebook_path: ../src/customer_analysis.ipynb
-        - task_key: Transections_analysis
+        - task_key: Transection_summary
           depends_on:
-            - task_key: Transection_summary
+            - task_key: customer_360
           notebook_task:
             notebook_path: ../src/Transections_summery.ipynb
       environments:
