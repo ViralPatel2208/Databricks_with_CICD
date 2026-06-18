@@ -1,49 +1,51 @@
-#This workflow validates, deploys, and runs the specified bundle
-#within a production target named "prod".
-
+# This workflow validates and deploys the specified bundle
+# to either the "dev" or "prod" target, depending on which
+# branch was pushed to.
 name: 'Production deployment'
 
-#Ensure that only a single job or workflow using the same concurrency group
-#runs at a time.
+# Ensure that only one run of this workflow executes at a time
+# (per branch), so deployments don't race each other.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
-concurrency: 1
-#Trigger this workflow whenever a pull request is pushed to the repo's
-#main branch.
+# Trigger this workflow whenever a commit is pushed to main or dev,
+# but only if files under bakehouse_analytics/ changed.
 on:
-    push:
-        branches:
-            - main
-            - dev
-        paths:
-            - 'bakehouse_analytics/**'
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'bakehouse_analytics/**'
 
 jobs:
-    deploy:
-        name: 'Deploy bundle'
-        runs-on: ubuntu-latest
+  deploy:
+    name: 'Deploy bundle'
+    runs-on: ubuntu-latest
+    steps:
+      # Check out this repo, so that this workflow can access it.
+      - uses: actions/checkout@v3
 
-        steps:
-          #check out this repo, so that this workflow can access it.
-          - uses: actions/checkout@v3
+      # Download the Databricks CLI.
+      # See https://github.com/databricks/setup-cli
+      - uses: databricks/setup-cli@main
 
-          #download the databricks CLI.
-          #see https://github.com/databricks/setup-cli
-          - uses: databricks/setup-cli@main
+      # Set target environment based on branch
+      - name: Set environment
+        id: set-env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "env=prod" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "env=dev" >> "$GITHUB_OUTPUT"
+          fi
 
-          #Set environment based on branch
-          - name: Set environment
-            id: set-env
-            run: |
-              if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-                echo "env=prod" >> $GITHUB_OUTPUT
-              elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-                echo "env=dev" >> $GITHUB_OUTPUT
-              fi
-
-          #deploy the bundle to prod target as defined
-          #in the bundle setting file 
-          - run: databricks bundle deploy
-            working-directory: bakehouse_analytics
-            env: 
-                DATABRICKS_TOKEN: ${{secrets.DB_TOKEN}}
-                DATABRICKS_BUNDLE_ENV: ${{ steps.set-env.outputs.env }}
+      # Deploy the bundle to the target determined above,
+      # as defined in the bundle settings file (databricks.yml).
+      - name: Deploy bundle
+        run: databricks bundle deploy --target ${{ steps.set-env.outputs.env }}
+        working-directory: bakehouse_analytics
+        env:
+          DATABRICKS_TOKEN: ${{ secrets.DB_TOKEN }}
+          DATABRICKS_BUNDLE_ENV: ${{ steps.set-env.outputs.env }}
