@@ -22,9 +22,15 @@ resources:
           default: ${var.schema}
 
       tasks:
-        - task_key: notebook_task
+        - task_key: customer_360
           notebook_task:
             notebook_path: ../src/customer_analysis.ipynb
+        - task_key: Transections_analysis
+          depends_on:
+            - task_key: Transection_summary
+          notebook_task:
+            notebook_path: ../src/customer_analysis.ipynb/Transections_summery.ipynb
+            source: WORKSPACE
 
       environments:
         - environment_key: default
