@@ -29,7 +29,7 @@ resources:
           depends_on:
             - task_key: Transection_summary
           notebook_task:
-            notebook_path: ../src/customer_analysis.ipynb/Transections_summery.ipynb
+            notebook_path: ../src/Transections_summery.ipynb
             source: WORKSPACE
 
       environments:
