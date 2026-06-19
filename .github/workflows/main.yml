@@ -52,6 +52,31 @@ jobs:
           DATABRICKS_TOKEN: ${{ secrets.DB_TOKEN }}
           DATABRICKS_BUNDLE_ENV: ${{ steps.set-env.outputs.env }}
 
+  # Run the job only if src folder changed - Depends on deploy job
+  run_job:
+    name: 'Run bakehouse_data_refresh job'
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      # Check out this repo, so that this workflow can access it.
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2  # Fetch last 2 commits to detect changes
+
+      # Download the Databricks CLI.
+      # See https://github.com/databricks/setup-cli
+      - uses: databricks/setup-cli@main
+
+      # Set target environment based on branch
+      - name: Set environment
+        id: set-env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "env=prod" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "env=dev" >> "$GITHUB_OUTPUT"
+          fi
+
       # Check if src folder has changes
       - name: Check for src changes
         id: check-src
