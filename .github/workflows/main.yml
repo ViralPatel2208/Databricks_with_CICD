@@ -67,7 +67,7 @@ jobs:
       # Run the job if src folder changed
       - name: Run bakehouse_data_refresh job
         if: steps.check-src.outputs.src_changed == 'true'
-        run: databricks bundle run bakehouse_data_refresh --target ${{ steps.set-env.outputs.env }}
+        run: databricks bundle run Bakehouse_data_refresh --target ${{ steps.set-env.outputs.env }}
         working-directory: bakehouse_analytics
         env:
           DATABRICKS_TOKEN: ${{ secrets.DB_TOKEN }}
